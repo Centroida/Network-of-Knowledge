@@ -10,14 +10,27 @@
 # different organization names or the number of peers in each peer organization.
 #
 
+# The volume mount to share data between containers
+DATA=data
+
+#Admin username and password
+NAME=admin
+PASS=123456
+
+#Chaincode env variables
+CHAINCODE_NAME=fabcar
+CHAINCODE_LOCATION=chaincode/fabcar
+CHAINCODE_VERSION=1.0
+CHAINCODE_INIT='{"Args":["init"]}'
+
 # Name of the docker-compose network
 NETWORK=nok
 
 # Names of the orderer organizations
-ORDERER_ORGS="nokOrg"
+ORDERER_ORGS="nokorg"
 
 # Names of the peer organizations
-PEER_ORGS="nokOrg"
+PEER_ORGS="nokorg"
 
 # Number of peers in each peer organization
 NUM_PEERS=2
@@ -35,9 +48,6 @@ ADMINCERTS=true
 # Number of orderer nodes
 NUM_ORDERERS=1
 
-# The volume mount to share data between containers
-DATA=data
-
 # The path to the genesis block
 GENESIS_BLOCK_FILE=/$DATA/genesis.block
 
@@ -45,7 +55,7 @@ GENESIS_BLOCK_FILE=/$DATA/genesis.block
 CHANNEL_TX_FILE=/$DATA/channel.tx
 
 # Name of test channel
-CHANNEL_NAME=nokChannel
+CHANNEL_NAME=nokchannel
 
 # Query timeout in seconds
 QUERY_TIMEOUT=15
@@ -85,6 +95,14 @@ CONFIG_BLOCK_FILE=/tmp/config_block.pb
 # Update config block payload file path
 CONFIG_UPDATE_ENVELOPE_FILE=/tmp/config_update_as_envelope.pb
 
+#fabricAPI name,image,exposed port,debugging flag,directory
+API_CONTAINER_NAME=fabricapi
+API_IMAGE=fabricapi
+API_IMAGE_DEBUG=fabricapi_debug
+API_PORT=3000
+API_DEBUG=true
+API_DIR='../fabcar/data_layer/setupfuncs/fabricAPI/'
+
 # initOrgVars <ORG>
 function initOrgVars {
    if [ $# -ne 1 ]; then
@@ -109,8 +127,8 @@ function initOrgVars {
    ROOT_CA_INT_PASS=intermediate
    ROOT_CA_INT_USER_PASS=${ROOT_CA_INT_USER}:${ROOT_CA_INT_PASS}
    # Intermediate CA admin identity
-   INT_CA_ADMIN_USER=intermediate-ca-${ORG}-admin
-   INT_CA_ADMIN_PASS=intermediate
+   INT_CA_ADMIN_USER=admin
+   INT_CA_ADMIN_PASS=admin
    INT_CA_ADMIN_USER_PASS=${INT_CA_ADMIN_USER}:${INT_CA_ADMIN_PASS}
    # Admin identity for the org
    ADMIN_NAME=admin-${ORG}
@@ -216,7 +234,7 @@ function initPeerVars {
    # bridge network as the peers
    # https://docs.docker.com/compose/networking/
    #export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_${NETWORK}
-   export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_${NETWORK}
+   export CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=network_${NETWORK}
    # export CORE_LOGGING_LEVEL=ERROR
    export CORE_LOGGING_LEVEL=DEBUG
    export CORE_PEER_TLS_ENABLED=false
@@ -233,7 +251,8 @@ function initPeerVars {
       # Point the non-anchor peers to the anchor peer, which is always the 1st peer
       export CORE_PEER_GOSSIP_BOOTSTRAP=peer1-${ORG}:7051
    fi
-#    export ORDERER_CONN_ARGS="$ORDERER_PORT_ARGS --keyfile $CORE_PEER_TLS_CLIENTKEY_FILE --certfile $CORE_PEER_TLS_CLIENTCERT_FILE"
+  #  export ORDERER_CONN_ARGS="$ORDERER_PORT_ARGS --keyfile $CORE_PEER_TLS_CLIENTKEY_FILE --certfile $CORE_PEER_TLS_CLIENTCERT_FILE"
+    export ORDERER_CONN_ARGS="$ORDERER_PORT_ARGS"
 }
 
 # Switch to the current org's admin identity.  Enroll if not previously enrolled.

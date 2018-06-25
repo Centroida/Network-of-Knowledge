@@ -22,6 +22,7 @@ function main {
    writeSetupFabric
    writeStartFabric
    writeRunFabric
+   writeAPI
    } > $SDIR/docker-compose.yml
    log "Created docker-compose.yml"
 }
@@ -60,6 +61,32 @@ function writeSetupFabric {
    done
    echo ""
 }
+# write fabricAPI
+function writeAPI {
+  #TODO: add env variables to the compose
+    if $API_DEBUG = true; 
+      then echo  "  $API_IMAGE_DEBUG:
+    container_name: $API_IMAGE_DEBUG
+    build:
+      context: ${API_DIR}
+      dockerfile: Dockerfile_dev" 
+    else echo "  $API_CONTAINER_NAME:
+    container_name: $API_IMAGE
+    image: $API_IMAGE"
+        fi
+      echo "    networks:
+      - $NETWORK
+    ports:
+      - ${API_PORT}:${API_PORT}"
+      if $API_DEBUG = true;
+      then
+        echo "      - 9229:9229
+    volumes:
+      - ${API_DIR}:/app/"
+        fi
+        echo "    depends_on:
+      - $INT_CA_NAME" 
+      }
 
 # Write services for fabric orderer and peer containers
 function writeStartFabric {
@@ -99,6 +126,7 @@ function writeRunFabric {
       - ./$DATA:/$DATA
       - ${SAMPLES_DIR}:/opt/gopath/src/github.com/hyperledger/fabric-samples
       - ${FABRIC_DIR}:/opt/gopath/src/github.com/hyperledger/fabric
+      - ./$CHAINCODE_LOCATION:/opt/gopath/src/$CHAINCODE_LOCATION
     networks:
       - $NETWORK
     depends_on:"
@@ -224,7 +252,7 @@ function writePeer {
       - CORE_PEER_LOCALMSPID=$ORG_MSP_ID
       - CORE_PEER_MSPCONFIGPATH=$MYHOME/msp
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_${NETWORK}
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=network_${NETWORK}
       - CORE_LOGGING_LEVEL=DEBUG
       - CORE_PEER_TLS_ENABLED=false
       # - CORE_PEER_TLS_CERT_FILE=$MYHOME/tls/server.crt

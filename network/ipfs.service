@@ -1,0 +1,13 @@
+[Unit]
+Description=IPFS Daemon
+After=network.target
+
+[Service]
+Type=forking
+Restart=always
+User=root
+ExecStart=/usr/local/bin/ipfs daemon
+# Install tells systemd when the service should be automatically started.
+# `multi-user.target` means the server will be automatically started during boot.
+[Install]
+WantedBy=multi-user.target

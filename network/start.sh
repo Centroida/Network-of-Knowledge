@@ -8,19 +8,20 @@
 #
 # This script does everything required to run the fabric CA sample.
 #
+#set -e 
+set -x
 
-set -e
+source ./run-ipfs.sh
 
 SDIR=$(dirname "$0")
 source ${SDIR}/scripts/env.sh
 
 cd ${SDIR}
 
-# Delete docker containers
+#Delete docker containers
 dockerContainers=$(docker ps -a | awk '$2~/hyperledger/ {print $1}')
 if [ "$dockerContainers" != "" ]; then
-   log "Deleting existing docker containers ..."
-   docker rm -f $dockerContainers > /dev/null
+${SDIR}/stop.sh
 fi
 
 # Remove chaincode docker images
@@ -43,6 +44,10 @@ ${SDIR}/makeDocker.sh
 
 # Create the docker containers
 log "Creating docker containers ..."
+if $API_DEBUG=true; then
+log "Development mode is on,rebuilding images"
+docker-compose build
+fi
 docker-compose up -d
 
 # Wait for the setup container to complete
@@ -65,3 +70,6 @@ while true; do
       sleep 1
    fi
 done
+
+fabric-ca-client register -d --id.name $NAME --id.secret $PASS --id.type client
+
